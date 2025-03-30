@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	invalidJsonMessage   string = "Ivalid Request"
+	invalidJsonMessage   string = "Invalid Request"
 	internalErrorMessage string = "Oops, something went wrong"
 	forbidenMessage      string = "Forbidden"
 )

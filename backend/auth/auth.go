@@ -2,6 +2,7 @@ package auth
 
 import (
 	"database/sql"
+	"strings"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -21,6 +22,9 @@ type User struct {
 func login(db *sql.DB, email, password string) (User, error) {
 	user, passwordHash, err := getUserByEmail(db, email)
 
+	if err == sql.ErrNoRows {
+		return User{}, errUserNotFound
+	}
 	if err != nil {
 		return User{}, err
 	}
@@ -35,6 +39,7 @@ func login(db *sql.DB, email, password string) (User, error) {
 }
 
 func registerUser(db *sql.DB, email, password string) (User, error) {
+	email = strings.TrimSpace(email)
 	_, _, err := getUserByEmail(db, email)
 
 	if err == nil {

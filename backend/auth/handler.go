@@ -3,6 +3,7 @@ package auth
 import (
 	"net/http"
 	"net/mail"
+	"strings"
 	"todo/database"
 	"todo/requests"
 
@@ -24,6 +25,8 @@ func loginHandler(c *gin.Context) {
 		requests.InvalidJson(c)
 		return
 	}
+
+	data.Email = strings.TrimSpace(data.Email)
 
 	db := database.GetDb(c)
 	user, err := login(db, data.Email, data.Password)
@@ -72,7 +75,10 @@ func registerHandler(c *gin.Context) {
 		return
 	}
 
+	data.Email = strings.TrimSpace(data.Email)
+
 	db := database.GetDb(c)
+
 	user, err := registerUser(db, data.Email, data.Password)
 
 	if err == bcrypt.ErrPasswordTooLong {
