@@ -29,7 +29,7 @@ services:
     develop:
       watch:
         - action: sync
-          path: ./frontend/
+          path: ./frontend
           target: ./app
         - action: rebuild
           path: ./frontend/package.json

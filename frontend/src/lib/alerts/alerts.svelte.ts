@@ -71,19 +71,19 @@ class Alerts {
 	#paused = false;
 
 	addAlert(message: string, type: AlertType) {
-		for (const alert of this.alerts) {
-			if (alert.isDuplicate(message, type)) {
-				alert.duplicate();
-				return;
-			}
-		}
-
-		const removeAlert = () => {
-			this.alerts = this.alerts.filter((alert) => alert.message !== message);
-		};
-
 		// use untrack to allow push to work in an effect
 		untrack(() => {
+			for (const alert of this.alerts) {
+				if (alert.isDuplicate(message, type)) {
+					alert.duplicate();
+					return;
+				}
+			}
+
+			const removeAlert = () => {
+				this.alerts = this.alerts.filter((alert) => alert.message !== message);
+			};
+
 			this.alerts.push(new Alert(message, type, removeAlert, this.#paused));
 		});
 	}

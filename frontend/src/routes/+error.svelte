@@ -15,11 +15,11 @@
 
 				if (currentPath !== HOME_PAGE_PATH && currentPath !== '') {
 					params.set(REDIRECT_PARAM_NAME, currentPath);
-					goto(`/login?${String(params)}`);
+					goto(`/login?${String(params)}`, { invalidateAll: true });
 					return;
 				}
 
-				goto('/login');
+				goto('/login', { invalidateAll: true });
 			} else if (page.status === 404) {
 				goto(HOME_PAGE_PATH);
 			}
@@ -43,5 +43,6 @@
 		text-align: center;
 		min-width: 100%;
 		padding: var(--size-7);
+		color: var(--primary-error);
 	}
 </style>

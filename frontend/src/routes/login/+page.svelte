@@ -4,7 +4,6 @@
 	import type { PageProps } from './$types';
 	import { enhance } from '$app/forms';
 	import { loginPasswordSchema } from '$lib/schemas';
-	import { handleActionWrapper } from '$lib/utils/forms';
 
 	let { form }: PageProps = $props();
 
@@ -18,14 +17,13 @@
 
 <form
 	method="POST"
+	action="?/login"
 	use:enhance={({ controller }) => {
 		submitted = true;
 
 		if (!valid) {
 			controller.abort();
 		}
-
-		return handleActionWrapper();
 	}}
 >
 	<LoginForm title="Login" {submitted} bind:valid passwordSchema={loginPasswordSchema}>

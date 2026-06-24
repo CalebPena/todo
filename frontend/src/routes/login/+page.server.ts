@@ -1,7 +1,7 @@
 import { dev } from '$app/environment';
 import { loginEndpoint } from '$lib/api/endpoints';
 import { actionWrapper, requestApi } from '$lib/api/helpers';
-import { HOME_PAGE_PATH, REDIRECT_PARAM_NAME, TOKEN_HEADER } from '$lib/constants';
+import { HOME_PAGE_PATH, REDIRECT_PARAM_NAME, TOKEN_COOKIE_NAME } from '$lib/constants';
 import {
 	emailSchema,
 	loginPasswordSchema,
@@ -12,7 +12,7 @@ import { redirect, type Actions } from '@sveltejs/kit';
 import { z } from 'zod';
 
 export const actions: Actions = {
-	default: actionWrapper(async ({ request, cookies, url }) => {
+	login: actionWrapper(async ({ request, cookies, url }) => {
 		const formData = await request.formData();
 
 		const email = validateApiInput(emailSchema, formData.get('email'));
@@ -25,7 +25,7 @@ export const actions: Actions = {
 			{ email: email, password: password },
 		);
 
-		cookies.set(TOKEN_HEADER, data.response.token, {
+		cookies.set(TOKEN_COOKIE_NAME, data.response.token, {
 			httpOnly: true,
 			secure: !dev,
 			sameSite: 'strict',
@@ -35,9 +35,14 @@ export const actions: Actions = {
 		const redirectUrl = url.searchParams.get(REDIRECT_PARAM_NAME);
 
 		if (redirectUrl !== null) {
-			throw redirect(303, redirectUrl);
+			redirect(303, redirectUrl);
 		}
 
-		throw redirect(303, HOME_PAGE_PATH);
+		redirect(303, HOME_PAGE_PATH);
+	}),
+	logout: actionWrapper(async ({ cookies }) => {
+		cookies.delete(TOKEN_COOKIE_NAME, { path: '/' });
+
+		redirect(303, '/login');
 	}),
 };

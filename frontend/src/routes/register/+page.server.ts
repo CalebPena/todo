@@ -1,7 +1,7 @@
 import { dev } from '$app/environment';
 import { registerEndpoint } from '$lib/api/endpoints';
 import { actionWrapper, requestApi } from '$lib/api/helpers';
-import { HOME_PAGE_PATH, TOKEN_HEADER } from '$lib/constants';
+import { HOME_PAGE_PATH, TOKEN_COOKIE_NAME } from '$lib/constants';
 import { emailSchema, passwordSchema, responseSchemaWrapper, validateApiInput } from '$lib/schemas';
 import { redirect, type Actions } from '@sveltejs/kit';
 import { z } from 'zod';
@@ -20,7 +20,7 @@ export const actions: Actions = {
 			{ email: email, password: password },
 		);
 
-		cookies.set(TOKEN_HEADER, data.response.token, {
+		cookies.set(TOKEN_COOKIE_NAME, data.response.token, {
 			httpOnly: true,
 			secure: !dev,
 			sameSite: 'strict',

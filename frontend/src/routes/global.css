@@ -3,7 +3,8 @@
 
 :root {
 	--primary-color: #5f3dc4;
-	--secondary-color: #cba135;
+	--secondary-color: #3979b9;
+	--tertiary-color: #a23dc4;
 	--primary-background-color: #f8fcff;
 	--primary-dark: #000000;
 	--primary-light: #ffffff;
@@ -27,6 +28,16 @@ input {
 	background-color: var(--primary-light);
 }
 
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+	max-width: unset;
+}
+
 .btn {
 	background-color: var(--primary-color);
 	color: var(--primary-light);
@@ -38,7 +49,6 @@ input {
 	&:hover,
 	&:focus-visible {
 		background-color: var(--secondary-color);
-		color: var(--primary-dark);
 	}
 }
 
@@ -66,8 +76,8 @@ input {
 }
 
 ::selection {
-	color: var(--primary-dark);
-	background-color: var(--secondary-color);
+	color: var(--primary-light);
+	background-color: var(--tertiary-color);
 }
 
 @media (prefers-reduced-motion: no-preference) {

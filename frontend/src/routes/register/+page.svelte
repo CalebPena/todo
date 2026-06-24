@@ -4,7 +4,6 @@
 	import type { PageProps } from './$types';
 	import { enhance } from '$app/forms';
 	import { passwordSchema } from '$lib/schemas';
-	import { handleActionWrapper } from '$lib/utils/forms';
 
 	let { form }: PageProps = $props();
 
@@ -24,8 +23,6 @@
 		if (!valid) {
 			controller.abort();
 		}
-
-		return handleActionWrapper();
 	}}
 >
 	<LoginForm title="Create an account" {submitted} bind:valid {passwordSchema}>

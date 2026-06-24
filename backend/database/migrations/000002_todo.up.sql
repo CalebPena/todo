@@ -1,0 +1,10 @@
+CREATE TABLE todos (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+    parent_id INT REFERENCES todos(id) ON DELETE CASCADE,
+    name VARCHAR(255) UNIQUE NOT NULL,
+    description TEXT NOT NULL,
+    value_rank INTEGER,
+    time_rank INTEGER,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
