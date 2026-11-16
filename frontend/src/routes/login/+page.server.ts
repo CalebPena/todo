@@ -34,7 +34,8 @@ export const actions: Actions = {
 
 		const redirectUrl = url.searchParams.get(REDIRECT_PARAM_NAME);
 
-		if (redirectUrl !== null) {
+		// Only follow same-site paths; "//host" and "/\host" would leave the site.
+		if (redirectUrl !== null && /^\/(?![/\\])/.test(redirectUrl)) {
 			redirect(303, redirectUrl);
 		}
 

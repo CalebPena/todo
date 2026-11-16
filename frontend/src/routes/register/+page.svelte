@@ -4,6 +4,7 @@
 	import type { PageProps } from './$types';
 	import { enhance } from '$app/forms';
 	import { passwordSchema } from '$lib/schemas';
+	import { Button } from '$lib/components/ui/button';
 
 	let { form }: PageProps = $props();
 
@@ -25,7 +26,15 @@
 		}
 	}}
 >
-	<LoginForm title="Create an account" {submitted} bind:valid {passwordSchema}>
-		{#snippet link()}<a href="/login" class="link">Click here to login</a>{/snippet}
+	<LoginForm
+		title="Create an account"
+		submitLabel="Create account"
+		{submitted}
+		bind:valid
+		{passwordSchema}
+	>
+		{#snippet link()}<Button href="/login" variant="link" class="h-auto p-0"
+				>Click here to login</Button
+			>{/snippet}
 	</LoginForm>
 </form>

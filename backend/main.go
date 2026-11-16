@@ -6,6 +6,7 @@ import (
 	"log"
 	"todo/auth"
 	"todo/database"
+	"todo/todo"
 	"todo/util"
 )
 
@@ -49,6 +50,7 @@ func main() {
 	p.Use(auth.AuthMiddleware)
 
 	p.GET("/ping", Hello)
+	todo.Router(p.Group("/todos"))
 
 	r.Run(":" + port)
 }

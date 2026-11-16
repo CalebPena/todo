@@ -1,55 +1,83 @@
+import { actionWrapper } from '$lib/api/helpers';
 import { TOKEN_COOKIE_NAME } from '$lib/constants';
-import type { Todo } from '$lib/todo/todo';
-import { error } from '@sveltejs/kit';
-import type { PageServerLoad } from './$types';
+import { validateApiInput } from '$lib/schemas';
+import { getTodo, listTodos, saveTodo, setCompleted } from '$lib/todo/api.server';
+import { todoInputSchema } from '$lib/todo/todo';
+import { error, isHttpError, redirect, type Cookies } from '@sveltejs/kit';
+import { z } from 'zod';
+import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = ({ cookies }) => {
-	if (cookies.get(TOKEN_COOKIE_NAME) === undefined) {
-		error(403, 'Please log in');
+const idSchema = z.coerce.number().int().positive().max(2147483647);
+
+function requireToken(cookies: Cookies, url: URL) {
+	const token = cookies.get(TOKEN_COOKIE_NAME);
+	if (!token) {
+		redirect(303, `/login?redirect=${encodeURIComponent(url.pathname)}`);
 	}
+	return token;
+}
 
-	const testTodo: Todo = {
-		name: 'Project Planning',
-		description: 'Plan the next project phase.\nhello\n\ngoodbye',
-		children: [
-			{
-				id: 1,
-				name: 'Define Scope',
-				description: 'Clearly define the project boundaries.'.repeat(100),
-				valueRank: 5,
-				timeRank: 3,
-			},
-			{
-				id: 2,
-				name: 'Assign Tasks',
-				description: 'Distribute tasks among team members.',
-				valueRank: 4,
-				timeRank: 1,
-			},
-			{
-				id: 3,
-				name: 'Set Deadlines',
-				description: 'Establish realistic deadlines for each task.',
-				valueRank: 3,
-				timeRank: 2,
-			},
-			{
-				id: 4,
-				name: 'Resource Allocation',
-				description: 'Allocate necessary resources.',
-				valueRank: 2,
-				timeRank: 4,
-			},
-			{
-				id: 5,
-				name: 'Risk Assessment',
-				description: 'Identify and assess potential risks.',
-				valueRank: 1,
-				timeRank: 5,
-			},
-		],
-		parentId: null,
-	};
+function routeId(value: string | undefined) {
+	if (value === undefined) {
+		return null;
+	}
+	const result = idSchema.safeParse(value);
+	if (!result.success) {
+		error(404, 'Todo not found');
+	}
+	return result.data;
+}
 
-	return { todo: testTodo };
+export const load: PageServerLoad = async ({ cookies, params, url }) => {
+	const token = requireToken(cookies, url);
+	const id = routeId(params.todoId);
+	try {
+		if (id === null) {
+			const todos = await listTodos(token);
+			return { todo: null, todos: todos.filter((todo) => todo.parentId === null) };
+		}
+		const todo = await getTodo(id, token);
+		return { todo, todos: todo.children };
+	} catch (err) {
+		if (isHttpError(err) && (err.status === 401 || err.status === 403)) {
+			cookies.delete(TOKEN_COOKIE_NAME, { path: '/' });
+			redirect(303, `/login?redirect=${encodeURIComponent(url.pathname)}`);
+		}
+		throw err;
+	}
+};
+
+export const actions: Actions = {
+	create: actionWrapper(async ({ request, cookies, params, url }) => {
+		const token = requireToken(cookies, url);
+		const form = await request.formData();
+		const input = validateApiInput(todoInputSchema, {
+			name: form.get('name'),
+			description: form.get('description'),
+		});
+		await saveTodo(null, { ...input, parentId: routeId(params.todoId) }, token);
+		return { success: true, action: 'create' };
+	}),
+	edit: actionWrapper(async ({ request, cookies, params, url }) => {
+		const token = requireToken(cookies, url);
+		const id = routeId(params.todoId);
+		if (id === null) {
+			error(400, 'Choose a todo to edit');
+		}
+		const form = await request.formData();
+		const input = validateApiInput(todoInputSchema, {
+			name: form.get('name'),
+			description: form.get('description'),
+		});
+		await saveTodo(id, input, token);
+		return { success: true, action: 'edit' };
+	}),
+	complete: actionWrapper(async ({ request, cookies, url }) => {
+		const token = requireToken(cookies, url);
+		const form = await request.formData();
+		const id = validateApiInput(idSchema, form.get('id'));
+		const completed = validateApiInput(z.enum(['true', 'false']), form.get('completed'));
+		await setCompleted(id, completed === 'true', token);
+		return { success: true, action: 'complete' };
+	}),
 };

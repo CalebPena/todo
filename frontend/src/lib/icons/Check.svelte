@@ -11,6 +11,6 @@
 
 <style>
 	path {
-		fill: var(--fill, var(--primary-dark));
+		fill: var(--fill, currentColor);
 	}
 </style>

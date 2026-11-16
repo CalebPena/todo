@@ -50,6 +50,8 @@ services:
           ignore:
             - node_modules/
             - .svelte-kit/
+            - .svelte-kit-check/
+            - .svelte-kit-build/
             - build/
             - .output/
             - vite.config.js.timestamp-*

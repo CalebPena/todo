@@ -2,14 +2,15 @@
 	let { descrption, lineClamp }: { descrption: string; lineClamp?: number } = $props();
 </script>
 
-<p class:line-clamp={lineClamp !== undefined} style:--line-clamp={lineClamp}>{descrption}</p>
+<p
+	class="whitespace-pre-wrap break-words text-sm leading-6 text-muted-foreground"
+	class:line-clamp={lineClamp !== undefined}
+	style:--line-clamp={lineClamp}
+>
+	{descrption}
+</p>
 
 <style>
-	p {
-		white-space: pre-wrap;
-		font-size: var(--font-size);
-	}
-
 	.line-clamp {
 		display: -webkit-box;
 		line-clamp: var(--line-clamp);

@@ -19,6 +19,11 @@ type User struct {
 	Id    int
 }
 
+// Emails are stored and compared in trimmed, lowercase form.
+func normalizeEmail(email string) string {
+	return strings.ToLower(strings.TrimSpace(email))
+}
+
 func login(db *sql.DB, email, password string) (User, error) {
 	user, passwordHash, err := getUserByEmail(db, email)
 
@@ -39,7 +44,7 @@ func login(db *sql.DB, email, password string) (User, error) {
 }
 
 func registerUser(db *sql.DB, email, password string) (User, error) {
-	email = strings.TrimSpace(email)
+	email = normalizeEmail(email)
 	_, _, err := getUserByEmail(db, email)
 
 	if err == nil {

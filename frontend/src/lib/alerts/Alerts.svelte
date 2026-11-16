@@ -6,6 +6,7 @@
 <!-- svelte-ignore a11y_mouse_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
+	class="fixed top-4 right-4 z-50 flex max-w-[calc(100vw-2rem)] flex-col gap-3"
 	onmouseover={() => {
 		alerts.pauseAll();
 	}}
@@ -17,14 +18,3 @@
 		<Alert {alert} />
 	{/each}
 </div>
-
-<style>
-	div {
-		position: fixed;
-		right: 0;
-		display: flex;
-		flex-direction: column;
-		gap: var(--size-3);
-		padding: var(--size-3);
-	}
-</style>

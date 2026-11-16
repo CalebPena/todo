@@ -2,6 +2,8 @@
 	import { fly } from 'svelte/transition';
 	import type { Alert } from './alerts.svelte';
 	import X from '$lib/icons/X.svelte';
+	import { Button } from '$lib/components/ui/button';
+	import * as AlertBox from '$lib/components/ui/alert';
 
 	const { alert }: { alert: Alert } = $props();
 
@@ -17,60 +19,30 @@
 
 		return alert.message + formattedAmount;
 	});
-
-	let color = $derived.by(() => {
-		if (alert.type === 'error') {
-			return 'var(--primary-error)';
-		}
-
-		return 'var(--primary-color)';
-	});
 </script>
 
-<div
-	transition:fly={{ opacity: 1, x: '120%' }}
-	role="alert"
-	class="container"
-	style:--color={color}
->
-	<button
-		onfocusin={() => {
-			alert.pause();
-		}}
-		onfocusout={() => {
-			alert.unpause();
-		}}
-		onclick={() => {
-			alert.remove();
-		}}
+<div transition:fly={{ opacity: 1, x: '120%' }} class="w-96 max-w-full">
+	<AlertBox.Root
+		variant={alert.type === 'error' ? 'destructive' : 'default'}
+		class="pr-12 shadow-sm"
 	>
-		<X />
-	</button>
-	{message}
+		<Button
+			variant="ghost"
+			size="icon-sm"
+			class="absolute top-1 right-1"
+			aria-label="Dismiss notification"
+			onfocusin={() => {
+				alert.pause();
+			}}
+			onfocusout={() => {
+				alert.unpause();
+			}}
+			onclick={() => {
+				alert.remove();
+			}}
+		>
+			<X --fill="currentColor" />
+		</Button>
+		<AlertBox.Description>{message}</AlertBox.Description>
+	</AlertBox.Root>
 </div>
-
-<style>
-	.container {
-		position: relative;
-		width: 40em;
-		max-width: 80vw;
-		padding: var(--size-3);
-		background-color: var(--primary-light);
-		border: var(--border-size-3) solid var(--color);
-		border-radius: var(--radius-3);
-		word-break: break-word;
-	}
-
-	button {
-		background: none;
-		position: absolute;
-		top: 0;
-		right: 0;
-
-		&:hover,
-		&:focus-visible {
-			background-color: var(--gray-3);
-			border-radius: var(--radius-round);
-		}
-	}
-</style>

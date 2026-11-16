@@ -1,104 +1,79 @@
 <script lang="ts">
 	import { formInputError } from '$lib/utils/forms';
 	import { emailSchema } from '$lib/schemas';
+	import { Button } from '$lib/components/ui/button';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
+	import * as Card from '$lib/components/ui/card';
 	import type { Snippet } from 'svelte';
-	import { Schema } from 'zod';
+	import type { Schema } from 'zod';
+
 	let {
 		title,
 		link,
 		submitted,
 		passwordSchema,
 		valid = $bindable(),
+		submitLabel = 'Login',
 	}: {
 		title: string;
 		link: Snippet;
 		submitted: boolean;
 		passwordSchema: Schema;
 		valid: boolean;
+		submitLabel?: string;
 	} = $props();
-
 	let email = $state('');
 	let password = $state('');
-
 	let emailErrorMessage = $derived(formInputError(emailSchema, email));
 	let passwordErrorMessage = $derived(formInputError(passwordSchema, password));
-
 	$effect(() => {
 		valid = emailErrorMessage === '' && passwordErrorMessage === '';
 	});
 </script>
 
-<div class="center">
-	<div class="container">
-		<h1>{title}</h1>
-		<div class="input-container">
-			<div>
-				<label for="email">Email:</label>
+<div class="flex min-h-[75vh] items-center justify-center py-8">
+	<Card.Root class="w-full max-w-sm">
+		<Card.Header><Card.Title class="text-xl">{title}</Card.Title></Card.Header>
+		<Card.Content class="space-y-5">
+			<div class="space-y-2">
+				<Label for="email">Email</Label>
+				<Input
+					type="email"
+					id="email"
+					name="email"
+					bind:value={email}
+					autocomplete="email"
+					aria-invalid={submitted && emailErrorMessage !== ''}
+					aria-describedby={submitted && emailErrorMessage ? 'email-error' : undefined}
+				/>
+				{#if emailErrorMessage !== '' && submitted}<p
+						id="email-error"
+						class="text-sm text-destructive"
+					>
+						{emailErrorMessage}
+					</p>{/if}
 			</div>
-			<div>
-				<input type="email" id="email" name="email" bind:value={email} />
+			<div class="space-y-2">
+				<Label for="password">Password</Label>
+				<Input
+					type="password"
+					id="password"
+					name="password"
+					bind:value={password}
+					autocomplete={submitLabel === 'Login' ? 'current-password' : 'new-password'}
+					aria-invalid={submitted && passwordErrorMessage !== ''}
+					aria-describedby={submitted && passwordErrorMessage ? 'password-error' : undefined}
+				/>
+				{#if passwordErrorMessage !== '' && submitted}<p
+						id="password-error"
+						class="text-sm text-destructive"
+					>
+						{passwordErrorMessage}
+					</p>{/if}
 			</div>
-			{#if emailErrorMessage !== '' && submitted}
-				<p class="err-msg">{emailErrorMessage}</p>
-			{/if}
-			<div>
-				<label for="password">Password:</label>
-			</div>
-			<div>
-				<input type="password" id="password" name="password" bind:value={password} />
-			</div>
-			{#if passwordErrorMessage !== '' && submitted}
-				<p class="err-msg">{passwordErrorMessage}</p>
-			{/if}
-			<div>
-				{@render link()}
-			</div>
-			<div class="button-container">
-				<button type="submit" class="btn">Login</button>
-			</div>
-		</div>
-	</div>
+			<div class="text-sm">{@render link()}</div>
+			<Button type="submit" class="w-full">{submitLabel}</Button>
+		</Card.Content>
+	</Card.Root>
 </div>
-
-<style>
-	.center {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		flex-direction: column;
-		height: 80vh;
-	}
-
-	.container {
-		background-color: var(--primary-background-color);
-		border: var(--border-size-3) solid var(--primary-color);
-		border-radius: var(--radius-3);
-		box-shadow: var(--shadow-4);
-	}
-
-	h1 {
-		font-size: 2.5em;
-		font-weight: var(--font-weight-6);
-		margin: 0;
-		text-align: center;
-		background-color: var(--primary-color);
-		color: var(--primary-light);
-		padding: var(--size-relative-1) 0 var(--size-relative-2) 0;
-		min-width: 100%;
-	}
-
-	.input-container {
-		padding: var(--size-relative-5) var(--size-relative-10) var(--size-relative-10)
-			var(--size-relative-10);
-	}
-
-	.button-container {
-		padding: var(--size-5) 0;
-	}
-
-	@media (max-width: 450px) {
-		.center {
-			font-size: var(--font-size-0);
-		}
-	}
-</style>

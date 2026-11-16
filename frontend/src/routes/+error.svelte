@@ -30,19 +30,10 @@
 	});
 </script>
 
-<h1>
+<h1 class="w-full p-8 text-center text-2xl font-semibold text-destructive">
 	{#if page.error !== null}
 		{page.error.message}
 	{:else}
 		{DEFUALT_ERROR_MESSAGE}
 	{/if}
 </h1>
-
-<style>
-	h1 {
-		text-align: center;
-		min-width: 100%;
-		padding: var(--size-7);
-		color: var(--primary-error);
-	}
-</style>

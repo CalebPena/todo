@@ -26,7 +26,7 @@ func loginHandler(c *gin.Context) {
 		return
 	}
 
-	data.Email = strings.TrimSpace(data.Email)
+	data.Email = normalizeEmail(data.Email)
 
 	db := database.GetDb(c)
 	user, err := login(db, data.Email, data.Password)
@@ -65,8 +65,11 @@ func registerHandler(c *gin.Context) {
 		return
 	}
 
-	_, err = mail.ParseAddress(data.Email)
-	if err != nil {
+	data.Email = normalizeEmail(data.Email)
+
+	// Reject anything that is not a bare address, such as "Name <user@example.com>".
+	address, err := mail.ParseAddress(data.Email)
+	if err != nil || address.Name != "" || strings.ToLower(address.Address) != data.Email || len(data.Email) > 255 {
 		c.JSON(http.StatusBadRequest, requests.ErrorResponseWrapper("Invalid email"))
 		return
 	}
@@ -74,8 +77,6 @@ func registerHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, requests.ErrorResponseWrapper("Password is too short"))
 		return
 	}
-
-	data.Email = strings.TrimSpace(data.Email)
 
 	db := database.GetDb(c)
 
