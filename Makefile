@@ -1,7 +1,7 @@
 .PHONY: dev up down logs ps
 
 dev:
-	docker compose up --build --watch
+	bash scripts/dev.sh
 
 up:
 	docker compose up --build

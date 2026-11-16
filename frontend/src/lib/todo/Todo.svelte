@@ -14,7 +14,7 @@
 </script>
 
 <h1>{todo.name}</h1>
-<TodoDescription descrption={todo.description} --font-size="1.3em" />
+<TodoDescription descrption={todo.description} --font-size="1em" />
 
 {#if children.length > 0}
 	<h2>Tasks:</h2>
@@ -29,8 +29,12 @@
 					<TodoDescription descrption={child.description} lineClamp={2} />
 				</div>
 				<div class="button-container">
-					<a class="view-button" href={`/${child.id}`}><Eye --fill="var(--primary-light)" /></a>
-					<button class="done-button"><Check --fill="var(--primary-light)" /></button>
+					<a class="view-button" href={`/${child.id}`} aria-label={`View ${child.name}`}
+						><Eye --fill="var(--primary-light)" /></a
+					>
+					<button class="done-button" aria-label={`Complete ${child.name}`}
+						><Check --fill="var(--primary-light)" /></button
+					>
 				</div>
 			</li>
 		{/each}
@@ -40,11 +44,14 @@
 <style>
 	h1 {
 		color: var(--primary-color);
+		font-size: 2rem;
 		margin-bottom: var(--size-3);
 	}
 
 	h2 {
 		color: var(--primary-color);
+		font-size: 1.25rem;
+		margin-top: var(--size-5);
 		margin-bottom: var(--size-3);
 	}
 
@@ -57,26 +64,26 @@
 
 	li {
 		list-style-type: none;
-		border: var(--border-size-3) solid var(--primary-color);
-		border-radius: var(--radius-3);
+		border: var(--border-size-1) solid var(--primary-color);
+		border-radius: var(--radius-2);
 		min-width: 100%;
 		padding: 0;
 		overflow: hidden;
 	}
 
 	.child-container {
-		padding: var(--size-2);
+		padding: var(--size-3);
 	}
 
 	.child-name {
 		color: var(--secondary-color);
-		font-size: var(--font-size-3);
+		font-size: var(--font-size-2);
 	}
 
 	.line {
-		height: var(--border-size-3);
+		height: var(--border-size-1);
 		background-color: var(--primary-color);
-		border-radius: var(--radius-round);
+		margin-block: var(--size-2);
 	}
 
 	.button-container {
@@ -87,8 +94,8 @@
 			flex: 1;
 			display: flex;
 			justify-content: center;
-			padding: 0.2em;
-			font-size: 1.5em;
+			padding: 0.4em;
+			font-size: 1em;
 		}
 	}
 

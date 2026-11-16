@@ -1,1 +1,3 @@
 .env
+.dev/
+backend/tmp/

@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 	"fmt"
+	"os"
 	"todo/util"
 
 	"github.com/gin-gonic/gin"
@@ -19,11 +20,18 @@ var dbPort string = "5432"
 var dbHost string = "db"
 var dbDriverName = "postgres"
 
-var migrationVersion uint = 1
-
 const dbKey string = "database"
 
 func InitDb() (*sql.DB, error) {
+	host := os.Getenv("POSTGRES_HOST")
+	if host != "" {
+		dbHost = host
+	}
+	port := os.Getenv("POSTGRES_PORT")
+	if port != "" {
+		dbPort = port
+	}
+
 	sslDissable := "enable"
 	if util.IsDebug {
 		sslDissable = "disable"
@@ -46,8 +54,7 @@ func InitDb() (*sql.DB, error) {
 		return nil, err
 	}
 
-	// err = migrations.Migrate(migrationVersion)
-	err = migrations.Force(int(migrationVersion))
+	err = migrations.Up()
 
 	if err != nil && err != migrate.ErrNoChange {
 		return nil, err
