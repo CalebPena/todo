@@ -11,6 +11,8 @@ services:
           target: ./app
         - action: rebuild
           path: ./backend/go.mod
+        - action: rebuild
+          path: ./backend/go.sum
     depends_on:
       - db
   db:
@@ -33,6 +35,8 @@ services:
           target: ./app
         - action: rebuild
           path: ./frontend/package.json
+        - action: rebuild
+          path: ./frontend/package-lock.json
 
 volumes:
   db-data:

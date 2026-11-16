@@ -2,9 +2,9 @@ FROM node:22
 
 WORKDIR /app
 
-COPY package*.json .
+COPY package*.json ./
 
-RUN npm i
+RUN --mount=type=cache,target=/root/.npm npm ci
 
 COPY . .
 
