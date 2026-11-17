@@ -3,6 +3,9 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import type { Snippet } from 'svelte';
+	import { flip } from 'svelte/animate';
+	import { cubicOut } from 'svelte/easing';
+	import { prefersReducedMotion } from 'svelte/motion';
 	import type { Todo } from './todo';
 	import CompleteButton from './CompleteButton.svelte';
 	import TodoDescription from './TodoDescription.svelte';
@@ -103,10 +106,14 @@
 {#if todos.length > 0}
 	<ol class="flex list-none flex-col gap-4 p-0">
 		{#each sortedTodos as child (child.id)}
-			<li onpointerenter={() => (hoveredId = child.id)} onpointerleave={() => (hoveredId = null)}>
+			<li
+				animate:flip={{ duration: prefersReducedMotion.current ? 0 : 650, easing: cubicOut }}
+				onpointerenter={() => (hoveredId = child.id)}
+				onpointerleave={() => (hoveredId = null)}
+			>
 				<Card.Root
 					class={[
-						'gap-3 rounded-lg py-0',
+						'gap-3 rounded-lg py-0 transition-[opacity,background-color] duration-500 motion-reduce:transition-none',
 						child.completed && 'bg-muted opacity-60',
 						child.id === selectedId &&
 							'border-purple-500 ring-1 ring-purple-500 dark:border-purple-400 dark:ring-purple-400',
