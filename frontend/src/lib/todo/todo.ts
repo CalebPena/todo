@@ -5,6 +5,7 @@ const todoFields = z.object({
 	name: z.string(),
 	description: z.string(),
 	completed: z.boolean(),
+	favorite: z.boolean(),
 	ranked: z.boolean(),
 	valueRank: z.number().int().positive().nullable(),
 	timeRank: z.number().int().positive().nullable(),
@@ -12,6 +13,8 @@ const todoFields = z.object({
 });
 
 export type Todo = z.infer<typeof todoFields> & { children: Todo[] };
+
+export type TodoSearchResult = Todo & { parentName: string | null };
 
 export const todoSchema: z.ZodType<Todo> = z.lazy(() =>
 	todoFields.extend({ children: z.array(todoSchema) }),

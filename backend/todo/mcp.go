@@ -26,6 +26,7 @@ type mcpTaskSummary struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Completed   bool   `json:"completed"`
+	Favorite    bool   `json:"favorite"`
 	Ranked      bool   `json:"ranked"`
 	ValueRank   *int   `json:"valueRank"`
 	TimeRank    *int   `json:"timeRank"`
@@ -43,7 +44,7 @@ type tasksOutput struct {
 }
 
 func summarizeMCPTask(task Todo) mcpTaskSummary {
-	return mcpTaskSummary{task.Id, task.Name, task.Description, task.Completed, task.Ranked, task.ValueRank, task.TimeRank, task.ParentId}
+	return mcpTaskSummary{task.Id, task.Name, task.Description, task.Completed, task.Favorite, task.Ranked, task.ValueRank, task.TimeRank, task.ParentId}
 }
 
 type listTasksInput struct {
@@ -52,6 +53,19 @@ type listTasksInput struct {
 	Completed *bool  `json:"completed,omitempty"`
 	Ranked    *bool  `json:"ranked,omitempty"`
 	Sort      string `json:"sort,omitempty" jsonschema:"mix (default), value, or time"`
+}
+
+type searchTasksInput struct {
+	Query string `json:"query" jsonschema:"Case-insensitive text to find in task names and descriptions."`
+}
+
+type searchTasksOutput struct {
+	Tasks []mcpSearchTask `json:"tasks"`
+}
+
+type mcpSearchTask struct {
+	mcpTaskSummary
+	ParentName *string `json:"parentName"`
 }
 type createTaskInput struct {
 	Name        string `json:"name"`
@@ -117,6 +131,22 @@ func taskMCPServer(db *sql.DB, user auth.User) *mcp.Server {
 		Instructions: "Manage only the authenticated user's tasks. Ranks are relative to active ranked siblings: value 1 is most valuable; time 1 is quickest. Mix sorts by the sum of both ranks. Completing clears ranks. Use get_task/list_tasks to inspect siblings before rank_task. Ask before deleting tasks.",
 	})
 	readOnly := &mcp.ToolAnnotations{ReadOnlyHint: true}
+	mcp.AddTool(server, &mcp.Tool{Name: "search_tasks", Description: "Search your account's task names and descriptions, case-insensitively. Returns up to 20 matches with parent names. Active tasks come first; within each group, exact and prefix name matches precede other name matches, then description matches.", Annotations: readOnly}, func(_ context.Context, _ *mcp.CallToolRequest, input searchTasksInput) (*mcp.CallToolResult, searchTasksOutput, error) {
+		query := strings.TrimSpace(input.Query)
+		if query == "" || len(query) > 800 {
+			return nil, searchTasksOutput{}, errors.New("Provide a non-empty search query of at most 800 bytes")
+		}
+		tasks, err := searchTodos(db, user, query, false)
+		if err != nil {
+			log.Printf("MCP search tasks: %v", err)
+			return nil, searchTasksOutput{}, errors.New("Unable to search tasks")
+		}
+		matches := []mcpSearchTask{}
+		for _, task := range tasks {
+			matches = append(matches, mcpSearchTask{summarizeMCPTask(task.Todo), task.ParentName})
+		}
+		return nil, searchTasksOutput{Tasks: matches}, nil
+	})
 	mcp.AddTool(server, &mcp.Tool{Name: "list_tasks", Description: "List tasks under a parent, or all tasks, with completion/ranking filters and mix, value, or time ordering.", Annotations: readOnly}, func(_ context.Context, _ *mcp.CallToolRequest, input listTasksInput) (*mcp.CallToolResult, tasksOutput, error) {
 		if !validMCPParent(input.ParentID) {
 			return nil, tasksOutput{}, errors.New("Invalid parent_id")

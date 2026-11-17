@@ -17,6 +17,7 @@ type Todo struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Completed   bool   `json:"completed"`
+	Favorite    bool   `json:"favorite"`
 	Ranked      bool   `json:"ranked"`
 	ValueRank   *int   `json:"valueRank"`
 	TimeRank    *int   `json:"timeRank"`
@@ -24,7 +25,7 @@ type Todo struct {
 	Children    []Todo `json:"children"`
 }
 
-const todoColumns = "id, name, description, value_rank, time_rank, parent_id, completed"
+const todoColumns = "id, name, description, value_rank, time_rank, parent_id, completed, favorite"
 const todoOrder = " ORDER BY value_rank::bigint + time_rank ASC NULLS LAST, id"
 
 type scanner interface {
@@ -33,7 +34,7 @@ type scanner interface {
 
 func scanTodo(row scanner) (Todo, error) {
 	todo := Todo{Children: []Todo{}}
-	err := row.Scan(&todo.Id, &todo.Name, &todo.Description, &todo.ValueRank, &todo.TimeRank, &todo.ParentId, &todo.Completed)
+	err := row.Scan(&todo.Id, &todo.Name, &todo.Description, &todo.ValueRank, &todo.TimeRank, &todo.ParentId, &todo.Completed, &todo.Favorite)
 	todo.Ranked = todo.ValueRank != nil && todo.TimeRank != nil
 	return todo, err
 }
@@ -57,6 +58,43 @@ func listTodos(db *sql.DB, user auth.User) ([]Todo, error) {
 		return nil, err
 	}
 	return readTodos(rows)
+}
+
+type searchTodo struct {
+	Todo
+	ParentName *string `json:"parentName"`
+}
+
+func searchTodos(db *sql.DB, user auth.User, query string, favoritesOnly bool) ([]searchTodo, error) {
+	rows, err := db.Query(`SELECT `+todoColumns+`,
+		(SELECT parent.name FROM todos parent WHERE parent.id = child.parent_id AND parent.user_id = $1)
+		FROM todos child
+		WHERE user_id = $1 AND (NOT $3 OR favorite)
+		AND ($2 = '' OR strpos(lower(name), lower($2)) > 0 OR strpos(lower(description), lower($2)) > 0)
+		ORDER BY completed, CASE
+			WHEN lower(name) = lower($2) THEN 0
+			WHEN starts_with(lower(name), lower($2)) THEN 1
+			WHEN strpos(lower(name), lower($2)) > 0 THEN 2
+			ELSE 3 END, lower(name), id
+		LIMIT 20`, user.Id, query, favoritesOnly)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	todos := []searchTodo{}
+	for rows.Next() {
+		task := searchTodo{Todo: Todo{Children: []Todo{}}}
+		if err := rows.Scan(&task.Id, &task.Name, &task.Description, &task.ValueRank, &task.TimeRank, &task.ParentId, &task.Completed, &task.Favorite, &task.ParentName); err != nil {
+			return nil, err
+		}
+		task.Ranked = task.ValueRank != nil && task.TimeRank != nil
+		todos = append(todos, task)
+	}
+	return todos, rows.Err()
+}
+
+func setFavorite(db *sql.DB, user auth.User, id int, favorite bool) (Todo, error) {
+	return scanTodo(db.QueryRow("UPDATE todos SET favorite = $1 WHERE id = $2 AND user_id = $3 RETURNING "+todoColumns, favorite, id, user.Id))
 }
 
 func getTodo(db *sql.DB, user auth.User, id int) (Todo, error) {

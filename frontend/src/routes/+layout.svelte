@@ -2,6 +2,7 @@
 	import Alerts from '$lib/alerts/Alerts.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { DropdownMenu } from 'bits-ui';
+	import TaskSearch from '$lib/todo/TaskSearch.svelte';
 	import { HOME_PAGE_PATH } from '$lib/constants';
 	import type { LayoutProps } from './$types';
 	import './global.css';
@@ -19,6 +20,7 @@
 			>Todos</Button
 		>
 		{#if data.loggedIn}
+			<TaskSearch />
 			<DropdownMenu.Root>
 				<DropdownMenu.Trigger>
 					{#snippet child({ props })}

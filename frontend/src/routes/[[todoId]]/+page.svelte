@@ -8,6 +8,7 @@
 	import * as Dialog from '$lib/components/ui/dialog';
 	import Todo from '$lib/todo/Todo.svelte';
 	import TodoForm from '$lib/todo/TodoForm.svelte';
+	import FavoriteButton from '$lib/todo/FavoriteButton.svelte';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
@@ -55,6 +56,7 @@
 					{/snippet}
 				</Dialog.Trigger>
 				{#if data.todo}
+					<FavoriteButton todo={data.todo} />
 					<Dialog.Root
 						bind:open={editing}
 						onOpenChange={(open) => {

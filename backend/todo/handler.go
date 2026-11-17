@@ -82,6 +82,48 @@ func listHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, requests.ResponseWrapper(gin.H{"todos": todos}))
 }
 
+func searchHandler(c *gin.Context) {
+	query := strings.TrimSpace(c.Query("q"))
+	if len(query) > 800 {
+		c.JSON(http.StatusBadRequest, requests.ErrorResponseWrapper("Search query is too long"))
+		return
+	}
+	if query == "" {
+		c.JSON(http.StatusOK, requests.ResponseWrapper(gin.H{"todos": []Todo{}}))
+		return
+	}
+	todos, err := searchTodos(database.GetDb(c), auth.GetUser(c), query, false)
+	if err != nil {
+		todoError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, requests.ResponseWrapper(gin.H{"todos": todos}))
+}
+
+func favoritesHandler(c *gin.Context) {
+	todos, err := searchTodos(database.GetDb(c), auth.GetUser(c), "", true)
+	if err != nil {
+		todoError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, requests.ResponseWrapper(gin.H{"todos": todos}))
+}
+
+func favoriteHandler(favorite bool) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id, ok := todoId(c)
+		if !ok {
+			return
+		}
+		todo, err := setFavorite(database.GetDb(c), auth.GetUser(c), id, favorite)
+		if err != nil {
+			todoError(c, err)
+			return
+		}
+		c.JSON(http.StatusOK, requests.ResponseWrapper(gin.H{"todo": todo}))
+	}
+}
+
 func getHandler(c *gin.Context) {
 	id, ok := todoId(c)
 	if !ok {

@@ -5,6 +5,9 @@ import { z } from 'zod';
 import { todoSchema } from './todo';
 
 const todoResponseSchema = responseSchemaWrapper(z.object({ todo: todoSchema }));
+const searchResponseSchema = responseSchemaWrapper(
+	z.object({ todos: z.array(todoSchema.and(z.object({ parentName: z.string().nullable() }))) }),
+);
 
 export async function listTodos(token: string) {
 	const { data } = await requestApi(
@@ -15,6 +18,39 @@ export async function listTodos(token: string) {
 		token,
 	);
 	return data.response.todos;
+}
+
+export async function searchTodos(query: string, token: string) {
+	const { data } = await requestApi(
+		`${BACKEND_DOMAIN}/todos/search?q=${encodeURIComponent(query)}`,
+		searchResponseSchema,
+		'GET',
+		undefined,
+		token,
+	);
+	return data.response.todos;
+}
+
+export async function listFavoriteTodos(token: string) {
+	const { data } = await requestApi(
+		`${BACKEND_DOMAIN}/todos/favorites`,
+		searchResponseSchema,
+		'GET',
+		undefined,
+		token,
+	);
+	return data.response.todos;
+}
+
+export async function setFavorite(id: number, favorite: boolean, token: string) {
+	const { data } = await requestApi(
+		`${BACKEND_DOMAIN}/todos/${id}/favorite`,
+		todoResponseSchema,
+		favorite ? 'PUT' : 'DELETE',
+		undefined,
+		token,
+	);
+	return data.response.todo;
 }
 
 export async function getTodo(id: number, token: string) {
