@@ -55,7 +55,8 @@ export const actions: Actions = {
 			name: form.get('name'),
 			description: form.get('description'),
 		});
-		await saveTodo(null, { ...input, parentId: routeId(params.todoId) }, token);
+		const todo = await saveTodo(null, { ...input, parentId: routeId(params.todoId) }, token);
+		if (form.get('intent') === 'rank') redirect(303, `/${todo.id}/rank`);
 		return { success: true, action: 'create' };
 	}),
 	edit: actionWrapper(async ({ request, cookies, params, url }) => {

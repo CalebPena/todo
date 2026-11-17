@@ -44,10 +44,15 @@
 			rows={3}
 			value={todo?.description ?? ''}
 		/>
-		<div class="mt-2 flex items-center gap-2">
+		<div class="mt-2 flex flex-wrap items-center gap-2">
 			<Button type="submit" disabled={pending}
 				>{pending ? 'Saving…' : action === 'create' ? 'Create todo' : 'Save changes'}</Button
 			>
+			{#if action === 'create'}
+				<Button type="submit" name="intent" value="rank" variant="outline" disabled={pending}
+					>Create and rank</Button
+				>
+			{/if}
 			<Button variant="ghost" type="button" onclick={onSaved} disabled={pending}>Cancel</Button>
 		</div>
 	</fieldset>

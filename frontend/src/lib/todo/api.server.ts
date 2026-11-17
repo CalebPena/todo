@@ -53,3 +53,18 @@ export async function setCompleted(id: number, completed: boolean, token: string
 	);
 	return data.response.todo;
 }
+
+export async function rankTodo(
+	id: number,
+	placement: { valueBeforeId: number | null; timeBeforeId: number | null },
+	token: string,
+) {
+	const { data } = await requestApi(
+		`${BACKEND_DOMAIN}/todos/${id}/rank`,
+		todoResponseSchema,
+		'PUT',
+		placement,
+		token,
+	);
+	return data.response.todo;
+}

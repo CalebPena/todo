@@ -45,11 +45,13 @@ func main() {
 	r.Use(database.DbMiddleware(db))
 
 	auth.Router(r.Group("/auth"))
+	r.Any("/mcp", auth.MCPAuthMiddleware, todo.MCPHandler)
 
 	p := r.Group("/")
 	p.Use(auth.AuthMiddleware)
 
 	p.GET("/ping", Hello)
+	auth.MCPTokenRoutes(p.Group("/mcp-tokens"))
 	todo.Router(p.Group("/todos"))
 
 	r.Run(":" + port)

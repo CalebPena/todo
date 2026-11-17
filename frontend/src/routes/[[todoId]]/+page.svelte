@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { afterNavigate } from '$app/navigation';
+	import { enhance } from '$app/forms';
+	import { DropdownMenu } from 'bits-ui';
 	import { alerts } from '$lib/alerts/alerts.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Alert from '$lib/components/ui/alert';
 	import * as Dialog from '$lib/components/ui/dialog';
-	import CompleteButton from '$lib/todo/CompleteButton.svelte';
 	import Todo from '$lib/todo/Todo.svelte';
 	import TodoForm from '$lib/todo/TodoForm.svelte';
 	import type { PageProps } from './$types';
@@ -12,6 +13,8 @@
 	let { data, form }: PageProps = $props();
 	let creating = $state(false);
 	let editing = $state(false);
+	let completing = $state(false);
+	let completionForm = $state<HTMLFormElement>();
 
 	$effect(() => {
 		alerts.addAlertFromFormError(form);
@@ -33,13 +36,14 @@
 	<Todo todo={data.todo} todos={data.todos}>
 		{#snippet controls()}
 			<div
-				class="ml-auto flex shrink-0 flex-wrap items-center justify-end gap-2"
+				class="ml-auto flex w-full min-w-0 flex-wrap items-center justify-end gap-2 sm:w-auto sm:shrink-0"
 				role="group"
 				aria-label="Task actions"
 			>
 				{#if data.todo}
 					<Button
 						variant="outline"
+						class="mr-auto"
 						href={data.todo.parentId === null ? '/' : `/${data.todo.parentId}`}
 					>
 						← {data.todo.parentId === null ? 'All todos' : 'Parent todo'}
@@ -57,10 +61,51 @@
 							if (open) creating = false;
 						}}
 					>
-						<Dialog.Trigger>
-							{#snippet child({ props })}<Button variant="outline" {...props}>Edit todo</Button
-								>{/snippet}
-						</Dialog.Trigger>
+						<DropdownMenu.Root>
+							<DropdownMenu.Trigger>
+								{#snippet child({ props })}<Button
+										{...props}
+										variant="outline"
+										size="icon"
+										aria-label="Task options">⋯</Button
+									>{/snippet}
+							</DropdownMenu.Trigger>
+							<DropdownMenu.Portal>
+								<DropdownMenu.Content
+									align="end"
+									sideOffset={6}
+									class="z-50 min-w-40 rounded-md border bg-popover p-1 text-popover-foreground shadow-md"
+								>
+									<DropdownMenu.Item
+										onclick={() => (editing = true)}
+										class="cursor-default rounded-sm px-3 py-2 text-sm outline-none data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground"
+										>Edit</DropdownMenu.Item
+									>
+									{#if !data.todo.completed}
+										<DropdownMenu.Item>
+											{#snippet child({ props })}
+												<a
+													{...props}
+													href={`/${data.todo.id}/rank`}
+													class="block cursor-default rounded-sm px-3 py-2 text-sm outline-none data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground"
+													>{data.todo.ranked ? 'Re-rank' : 'Rank task'}</a
+												>
+											{/snippet}
+										</DropdownMenu.Item>
+									{/if}
+									<DropdownMenu.Item
+										disabled={completing}
+										onclick={() => completionForm?.requestSubmit()}
+										class="cursor-default rounded-sm px-3 py-2 text-sm outline-none data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[disabled]:opacity-50"
+										>{completing
+											? 'Saving…'
+											: data.todo.completed
+												? 'Reopen'
+												: 'Complete'}</DropdownMenu.Item
+									>
+								</DropdownMenu.Content>
+							</DropdownMenu.Portal>
+						</DropdownMenu.Root>
 						<Dialog.Content class="max-h-[85vh] overflow-y-auto sm:max-w-lg">
 							<Dialog.Header>
 								<Dialog.Title>Edit todo</Dialog.Title>
@@ -71,7 +116,25 @@
 								>{/if}
 						</Dialog.Content>
 					</Dialog.Root>
-					<div class="flex"><CompleteButton todo={data.todo} /></div>
+					<form
+						bind:this={completionForm}
+						method="POST"
+						action="?/complete"
+						class="hidden"
+						use:enhance={() => {
+							completing = true;
+							return async ({ update }) => {
+								try {
+									await update();
+								} finally {
+									completing = false;
+								}
+							};
+						}}
+					>
+						<input type="hidden" name="id" value={data.todo.id} />
+						<input type="hidden" name="completed" value={String(!data.todo.completed)} />
+					</form>
 				{/if}
 			</div>
 		{/snippet}
