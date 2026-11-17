@@ -30,12 +30,14 @@
 		todo,
 		siblings,
 		snapshot,
+		rankAll = false,
 		message,
 		restartRequired = false,
 	}: {
 		todo: Todo;
 		siblings: Todo[];
 		snapshot: string;
+		rankAll?: boolean;
 		message?: string;
 		restartRequired?: boolean;
 	} = $props();
@@ -546,6 +548,7 @@
 				<input type="hidden" name="valueBeforeId" value={ranking.valueBeforeId ?? ''} />
 				<input type="hidden" name="timeBeforeId" value={ranking.timeBeforeId ?? ''} />
 				<input type="hidden" name="snapshot" value={snapshot} />
+				<input type="hidden" name="rankAll" value={String(rankAll)} />
 				<Button
 					type="submit"
 					class="w-full"

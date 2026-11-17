@@ -1,7 +1,7 @@
 import { actionWrapper } from '$lib/api/helpers';
 import { TOKEN_COOKIE_NAME } from '$lib/constants';
 import { validateApiInput } from '$lib/schemas';
-import { rankTodo } from '$lib/todo/api.server';
+import { listTodos, rankTodo } from '$lib/todo/api.server';
 import { getRankingContext } from '$lib/todo/ranking.server';
 import { error, fail, isHttpError, redirect, type Cookies } from '@sveltejs/kit';
 import { z } from 'zod';
@@ -29,7 +29,10 @@ function routeId(value: string | undefined) {
 export const load: PageServerLoad = async ({ cookies, params, url }) => {
 	const token = requireToken(cookies, url);
 	try {
-		return await getRankingContext(routeId(params.todoId), token);
+		return {
+			...(await getRankingContext(routeId(params.todoId), token)),
+			rankAll: url.searchParams.get('all') === 'true',
+		};
 	} catch (err) {
 		if (isHttpError(err) && (err.status === 401 || err.status === 403)) {
 			cookies.delete(TOKEN_COOKIE_NAME, { path: '/' });
@@ -68,6 +71,19 @@ export const actions: Actions = {
 			{ valueBeforeId: input.valueBeforeId, timeBeforeId: input.timeBeforeId },
 			token,
 		);
+		if (form.get('rankAll') === 'true') {
+			const todos = await listTodos(token);
+			const next = todos
+				.filter(
+					(todo) =>
+						todo.id !== id &&
+						todo.parentId === current.todo.parentId &&
+						!todo.completed &&
+						!todo.ranked,
+				)
+				.toSorted((a, b) => a.id - b.id)[0];
+			if (next) redirect(303, `/${next.id}/rank?all=true`);
+		}
 		redirect(303, current.todo.parentId === null ? '/' : `/${current.todo.parentId}`);
 	}),
 };

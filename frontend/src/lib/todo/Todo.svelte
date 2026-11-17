@@ -17,6 +17,9 @@
 
 	let selectedId = $state<number | null>(null);
 	let hoveredId = $state<number | null>(null);
+	let unranked = $derived(
+		todos.filter((task) => !task.completed && !task.ranked).toSorted((a, b) => a.id - b.id),
+	);
 	type RankingSort = 'time' | 'value' | 'mix';
 	let sortBy = $state<RankingSort>('mix');
 	const sortOptions: { value: RankingSort; label: string }[] = [
@@ -35,8 +38,9 @@
 	let sortedTodos = $derived(
 		todos.toSorted(
 			(a, b) =>
-				Number(b.id === selectedId) - Number(a.id === selectedId) ||
 				Number(a.completed) - Number(b.completed) ||
+				Number(a.ranked) - Number(b.ranked) ||
+				Number(b.id === selectedId) - Number(a.id === selectedId) ||
 				rankScore(a) - rankScore(b) ||
 				0,
 		),
@@ -65,28 +69,35 @@
 
 <div class="mt-6 mb-4 flex flex-wrap items-center justify-between gap-3">
 	<h2 class="text-xl font-semibold text-primary">{todo ? 'Subtasks:' : 'Tasks:'}</h2>
-	<div
-		role="group"
-		aria-label="Sort tasks by ranking"
-		class="inline-flex items-center rounded-lg bg-muted p-1 text-muted-foreground"
-	>
-		{#each sortOptions as option (option.value)}
-			<Button
-				variant="ghost"
-				size="sm"
-				class={[
-					'h-7 rounded-md px-3 hover:text-foreground',
-					sortBy === option.value
-						? 'bg-background text-foreground shadow-sm hover:bg-background dark:bg-input/30 dark:hover:bg-input/30'
-						: 'hover:bg-transparent dark:hover:bg-transparent',
-				]}
-				aria-pressed={sortBy === option.value}
-				onclick={() => {
-					sortBy = option.value;
-					selectedId = null;
-				}}>{option.label}</Button
+	<div class="flex flex-wrap items-center gap-2">
+		{#if unranked.length > 0}
+			<Button variant="outline" size="sm" href={`/${unranked[0].id}/rank?all=true`}
+				>Rank all ({unranked.length})</Button
 			>
-		{/each}
+		{/if}
+		<div
+			role="group"
+			aria-label="Sort tasks by ranking"
+			class="inline-flex items-center rounded-lg bg-muted p-1 text-muted-foreground"
+		>
+			{#each sortOptions as option (option.value)}
+				<Button
+					variant="ghost"
+					size="sm"
+					class={[
+						'h-7 rounded-md px-3 hover:text-foreground',
+						sortBy === option.value
+							? 'bg-background text-foreground shadow-sm hover:bg-background dark:bg-input/30 dark:hover:bg-input/30'
+							: 'hover:bg-transparent dark:hover:bg-transparent',
+					]}
+					aria-pressed={sortBy === option.value}
+					onclick={() => {
+						sortBy = option.value;
+						selectedId = null;
+					}}>{option.label}</Button
+				>
+			{/each}
+		</div>
 	</div>
 </div>
 {#if todos.length > 0}
