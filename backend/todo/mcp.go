@@ -21,12 +21,31 @@ type taskIDInput struct {
 	ID int `json:"task_id" jsonschema:"Task ID"`
 }
 
+type mcpTaskSummary struct {
+	ID          int    `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Completed   bool   `json:"completed"`
+	Ranked      bool   `json:"ranked"`
+	ValueRank   *int   `json:"valueRank"`
+	TimeRank    *int   `json:"timeRank"`
+	ParentID    *int   `json:"parentId"`
+}
+type mcpTask struct {
+	mcpTaskSummary
+	Children []mcpTaskSummary `json:"children"`
+}
 type taskOutput struct {
-	Task Todo `json:"task"`
+	Task mcpTask `json:"task"`
 }
 type tasksOutput struct {
-	Tasks []Todo `json:"tasks"`
+	Tasks []mcpTaskSummary `json:"tasks"`
 }
+
+func summarizeMCPTask(task Todo) mcpTaskSummary {
+	return mcpTaskSummary{task.Id, task.Name, task.Description, task.Completed, task.Ranked, task.ValueRank, task.TimeRank, task.ParentId}
+}
+
 type listTasksInput struct {
 	ParentID  *int   `json:"parent_id,omitempty" jsonschema:"Parent task ID. Omit for root tasks."`
 	All       bool   `json:"all,omitempty" jsonschema:"List all levels instead of just one parent."`
@@ -70,7 +89,11 @@ func mcpTaskResult(task Todo, err error) (*mcp.CallToolResult, taskOutput, error
 			err = errors.New("Unable to update or read task")
 		}
 	}
-	return nil, taskOutput{Task: task}, err
+	children := []mcpTaskSummary{}
+	for _, child := range task.Children {
+		children = append(children, summarizeMCPTask(child))
+	}
+	return nil, taskOutput{Task: mcpTask{summarizeMCPTask(task), children}}, err
 }
 
 // Stateless requests are authenticated independently, so revocation takes effect on the next request.
@@ -132,7 +155,11 @@ func taskMCPServer(db *sql.DB, user auth.User) *mcp.Server {
 			}
 			return score(filtered[i]) < score(filtered[j])
 		})
-		return nil, tasksOutput{Tasks: filtered}, nil
+		summaries := []mcpTaskSummary{}
+		for _, task := range filtered {
+			summaries = append(summaries, summarizeMCPTask(task))
+		}
+		return nil, tasksOutput{Tasks: summaries}, nil
 	})
 	mcp.AddTool(server, &mcp.Tool{Name: "get_task", Description: "Read a task including its description, ranks, and direct subtasks.", Annotations: readOnly}, func(_ context.Context, _ *mcp.CallToolRequest, input taskIDInput) (*mcp.CallToolResult, taskOutput, error) {
 		if !validMCPID(input.ID) {

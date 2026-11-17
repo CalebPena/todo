@@ -1,7 +1,7 @@
 import { BACKEND_DOMAIN } from '$env/static/private';
 import type { RequestHandler } from './$types';
 
-const proxy: RequestHandler = async ({ request, url, fetch }) => {
+const proxy: RequestHandler = async ({ request, url }) => {
 	const origin = request.headers.get('origin');
 	if (origin && origin !== url.origin) return new Response('Forbidden origin', { status: 403 });
 	const headers = new Headers();
