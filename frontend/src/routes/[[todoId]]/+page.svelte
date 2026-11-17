@@ -15,6 +15,8 @@
 	let creating = $state(false);
 	let editing = $state(false);
 	let completing = $state(false);
+	let deleting = $state(false);
+	let deletePending = $state(false);
 	let completionForm = $state<HTMLFormElement>();
 
 	$effect(() => {
@@ -23,6 +25,7 @@
 	afterNavigate(() => {
 		creating = false;
 		editing = false;
+		deleting = false;
 	});
 </script>
 
@@ -105,6 +108,12 @@
 												? 'Reopen'
 												: 'Complete'}</DropdownMenu.Item
 									>
+									<DropdownMenu.Separator class="my-1 h-px bg-border" />
+									<DropdownMenu.Item
+										onclick={() => (deleting = true)}
+										class="cursor-default rounded-sm px-3 py-2 text-sm text-destructive outline-none data-[highlighted]:bg-destructive/10"
+										>Delete</DropdownMenu.Item
+									>
 								</DropdownMenu.Content>
 							</DropdownMenu.Portal>
 						</DropdownMenu.Root>
@@ -160,3 +169,53 @@
 			>{/if}
 	</Dialog.Content>
 </Dialog.Root>
+
+{#if data.todo}
+	<Dialog.Root bind:open={deleting}>
+		<Dialog.Content
+			class="sm:max-w-md"
+			onInteractOutside={(event) => {
+				if (deletePending) event.preventDefault();
+			}}
+			onEscapeKeydown={(event) => {
+				if (deletePending) event.preventDefault();
+			}}
+		>
+			<Dialog.Header>
+				<Dialog.Title>Delete task?</Dialog.Title>
+				<Dialog.Description
+					>“{data.todo.name}” and all its subtasks will be permanently deleted. This cannot be
+					undone.</Dialog.Description
+				>
+			</Dialog.Header>
+			{#if form && 'message' in form}<Alert.Root variant="destructive"
+					><Alert.Description>{form.message}</Alert.Description></Alert.Root
+				>{/if}
+			<form
+				method="POST"
+				action="?/delete"
+				use:enhance={() => {
+					deletePending = true;
+					return async ({ update }) => {
+						try {
+							await update();
+						} finally {
+							deletePending = false;
+						}
+					};
+				}}
+				class="flex justify-end gap-2"
+			>
+				<Button
+					type="button"
+					variant="outline"
+					disabled={deletePending}
+					onclick={() => (deleting = false)}>Cancel</Button
+				>
+				<Button type="submit" variant="destructive" disabled={deletePending}
+					>{deletePending ? 'Deleting…' : 'Delete task'}</Button
+				>
+			</form>
+		</Dialog.Content>
+	</Dialog.Root>
+{/if}

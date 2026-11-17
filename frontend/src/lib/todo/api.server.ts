@@ -1,10 +1,18 @@
 import { BACKEND_DOMAIN } from '$env/static/private';
-import { requestApi } from '$lib/api/helpers';
+import { checkResponse, requestApi } from '$lib/api/helpers';
 import { responseSchemaWrapper } from '$lib/schemas';
 import { z } from 'zod';
 import { todoSchema } from './todo';
 
 const todoResponseSchema = responseSchemaWrapper(z.object({ todo: todoSchema }));
+
+export async function deleteTodo(id: number, token: string) {
+	const response = await fetch(`${BACKEND_DOMAIN}/todos/${id}`, {
+		method: 'DELETE',
+		headers: { Authorization: `Bearer ${token}` },
+	});
+	await checkResponse(response);
+}
 const searchResponseSchema = responseSchemaWrapper(
 	z.object({ todos: z.array(todoSchema.and(z.object({ parentName: z.string().nullable() }))) }),
 );

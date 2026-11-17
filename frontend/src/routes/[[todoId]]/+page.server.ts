@@ -1,7 +1,14 @@
 import { actionWrapper } from '$lib/api/helpers';
 import { TOKEN_COOKIE_NAME } from '$lib/constants';
 import { validateApiInput } from '$lib/schemas';
-import { getTodo, listTodos, saveTodo, setCompleted, setFavorite } from '$lib/todo/api.server';
+import {
+	deleteTodo,
+	getTodo,
+	listTodos,
+	saveTodo,
+	setCompleted,
+	setFavorite,
+} from '$lib/todo/api.server';
 import { todoInputSchema } from '$lib/todo/todo';
 import { error, isHttpError, redirect, type Cookies } from '@sveltejs/kit';
 import { z } from 'zod';
@@ -48,6 +55,14 @@ export const load: PageServerLoad = async ({ cookies, params, url }) => {
 };
 
 export const actions: Actions = {
+	delete: actionWrapper(async ({ cookies, params, url }) => {
+		const token = requireToken(cookies, url);
+		const id = routeId(params.todoId);
+		if (id === null) error(400, 'Choose a task to delete');
+		const todo = await getTodo(id, token);
+		await deleteTodo(id, token);
+		redirect(303, todo.parentId === null ? '/' : `/${todo.parentId}`);
+	}),
 	favorite: actionWrapper(async ({ request, cookies, url }) => {
 		const token = requireToken(cookies, url);
 		const form = await request.formData();
