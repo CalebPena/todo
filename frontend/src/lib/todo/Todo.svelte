@@ -136,7 +136,7 @@
 								title="Re-rank task"
 								class="shrink-0 rounded-r-lg transition-opacity hover:opacity-80 focus-visible:outline-2 focus-visible:outline-ring"
 							>
-								<dl class="grid shrink-0 grid-cols-1 border-l text-center sm:grid-cols-2">
+								<dl class="grid h-full shrink-0 grid-cols-1 border-l text-center sm:grid-cols-2">
 									<div
 										class="flex min-w-16 flex-col justify-center gap-1 bg-rose-50 px-3 py-3 text-rose-700 dark:bg-rose-950 dark:text-rose-300 sm:min-w-20"
 										title="Value rank among siblings. 1 is most valuable."
