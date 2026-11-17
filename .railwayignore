@@ -1,0 +1,13 @@
+.git/
+.dev/
+.env
+.env.*
+**/.env
+**/.env.*
+**/node_modules/
+**/.svelte-kit/
+**/.svelte-kit-*/
+**/build/
+**/.output/
+backend/tmp/
+backend/bin/

@@ -4,13 +4,12 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"log"
+	"os"
 	"todo/auth"
 	"todo/database"
 	"todo/todo"
 	"todo/util"
 )
-
-var port string = util.GetEnvironmentVariable("BACKEND_PORT")
 
 func init() {
 	if !util.IsDebug {
@@ -43,6 +42,13 @@ func main() {
 	r := gin.Default()
 
 	r.Use(database.DbMiddleware(db))
+	r.GET("/healthz", func(c *gin.Context) {
+		if err := db.PingContext(c.Request.Context()); err != nil {
+			c.Status(503)
+			return
+		}
+		c.Status(200)
+	})
 
 	auth.Router(r.Group("/auth"))
 	r.Any("/mcp", auth.MCPAuthMiddleware, todo.MCPHandler)
@@ -54,5 +60,14 @@ func main() {
 	auth.MCPTokenRoutes(p.Group("/mcp-tokens"))
 	todo.Router(p.Group("/todos"))
 
-	r.Run(":" + port)
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = os.Getenv("BACKEND_PORT")
+	}
+	if port == "" {
+		port = "8080"
+	}
+	if err := r.Run(":" + port); err != nil {
+		log.Fatal(err)
+	}
 }

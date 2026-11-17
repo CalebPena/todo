@@ -5,6 +5,7 @@
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
+		"start": "node build",
 		"build": "SVELTEKIT_OUT_DIR=.svelte-kit-build vite build",
 		"preview": "SVELTEKIT_OUT_DIR=.svelte-kit-build vite preview",
 		"prepare": "svelte-kit sync || echo ''",
@@ -18,7 +19,7 @@
 		"@eslint/js": "^9.18.0",
 		"@internationalized/date": "^3.12.4",
 		"@lucide/svelte": "^1.73.0",
-		"@sveltejs/adapter-auto": "^4.0.0",
+		"@sveltejs/adapter-node": "^5.5.8",
 		"@sveltejs/kit": "^2.16.0",
 		"@sveltejs/vite-plugin-svelte": "^5.0.0",
 		"@tailwindcss/vite": "^4.3.5",

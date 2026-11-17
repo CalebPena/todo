@@ -2,6 +2,7 @@ package database
 
 import (
 	"database/sql"
+	"embed"
 	"fmt"
 	"os"
 	"todo/util"
@@ -9,18 +10,18 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/golang-migrate/migrate/v4/source/iofs"
 	_ "github.com/lib/pq"
 )
 
-var dbUser string = util.GetEnvironmentVariable("POSTGRES_USER")
-var dbPassword string = util.GetEnvironmentVariable("POSTGRES_PASSWORD")
-var dbName string = util.GetEnvironmentVariable("POSTGRES_DB")
 var dbPort string = "5432"
-var dbHost string = "db"
+var dbHost string = "127.0.0.1"
 var dbDriverName = "postgres"
 
 const dbKey string = "database"
+
+//go:embed migrations/*.sql
+var migrationFiles embed.FS
 
 func InitDb() (*sql.DB, error) {
 	host := os.Getenv("POSTGRES_HOST")
@@ -32,11 +33,18 @@ func InitDb() (*sql.DB, error) {
 		dbPort = port
 	}
 
-	sslDissable := "enable"
+	sslMode := "require"
 	if util.IsDebug {
-		sslDissable = "disable"
+		sslMode = "disable"
 	}
-	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s", dbHost, dbPort, dbUser, dbPassword, dbName, sslDissable)
+	if configured := os.Getenv("POSTGRES_SSLMODE"); configured != "" {
+		sslMode = configured
+	}
+	connStr := os.Getenv("DATABASE_URL")
+	if connStr == "" {
+		connStr = fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s", dbHost, dbPort,
+			util.GetEnvironmentVariable("POSTGRES_USER"), util.GetEnvironmentVariable("POSTGRES_PASSWORD"), util.GetEnvironmentVariable("POSTGRES_DB"), sslMode)
+	}
 
 	db, err := sql.Open(dbDriverName, connStr)
 
@@ -49,7 +57,11 @@ func InitDb() (*sql.DB, error) {
 		return nil, err
 	}
 
-	migrations, err := migrate.NewWithDatabaseInstance("file://./database/migrations/", dbDriverName, instance)
+	source, err := iofs.New(migrationFiles, "migrations")
+	if err != nil {
+		return nil, err
+	}
+	migrations, err := migrate.NewWithInstance("iofs", source, dbDriverName, instance)
 	if err != nil {
 		return nil, err
 	}
